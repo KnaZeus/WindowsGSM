@@ -416,20 +416,25 @@ namespace WindowsGSM.DiscordBot
             };
 
             string prefix = Configs.GetBotPrefix();
+            var commands = new List<CommandSummary>
+            {
+                new CommandSummary { Command = $"{prefix}wgsm check", Usage = "Check permission" },
+                new CommandSummary { Command = $"{prefix}wgsm list", Usage = "Print server list with id, status and name" },
+                new CommandSummary { Command = $"{prefix}wgsm start <SERVERID>", Usage = "Start a server remotely by serverId" },
+                new CommandSummary { Command = $"{prefix}wgsm stop <SERVERID>", Usage = "Stop a server remotely by serverId" },
+                new CommandSummary { Command = $"{prefix}wgsm restart <SERVERID>", Usage = "Restart a server remotely by serverId" },
+                new CommandSummary { Command = $"{prefix}wgsm update <SERVERID>", Usage = "Update a server remotely by serverId" },
+                new CommandSummary { Command = $"{prefix}wgsm send <SERVERID> <COMMAND>", Usage = "Send a command to server console" },
+                new CommandSummary { Command = $"{prefix}wgsm backup <SERVERID>", Usage = "Backup a server remotely by serverId" },
+                new CommandSummary { Command = $"{prefix}wgsm stats", Usage = "Get system stats" },
+                new CommandSummary { Command = $"{prefix}wgsm getparam <SERVERID>", Usage = "Get the current startup parameters for the specified server" },
+                new CommandSummary { Command = $"{prefix}wgsm setparam <SERVERID> <PARAMETERS>", Usage = "Set new startup parameters for the specified server" }
+            };
+
             embed.AddField("Available Commands:",
-                $"```Command                          Usage\n"
-                + $"{prefix}wgsm check                 Check permission\n"
-                + $"{prefix}wgsm list                  Print server list with id, status and name\n"
-                + $"{prefix}wgsm start <SERVERID>      Start a server remotely by serverId\n"
-                + $"{prefix}wgsm stop <SERVERID>       Stop a server remotely by serverId\n"
-                + $"{prefix}wgsm restart <SERVERID>    Restart a server remotely by serverId\n"
-                + $"{prefix}wgsm update <SERVERID>     Update a server remotely by serverId\n"
-                + $"{prefix}wgsm send <SERVERID> <COMMAND> Send a command to server console\n"
-                + $"{prefix}wgsm backup <SERVERID>     Backup a server remotely by serverId\n"
-                + $"{prefix}wgsm stats                 Get system stats\n"
-                + $"{prefix}wgsm getparam <SERVERID>   Get the current startup parameters for the specified server\n"
-                + $"{prefix}wgsm setparam <SERVERID> <PARAMETERS> Set new startup parameters for the specified server\n"
-                + "```", false);
+                $"```Command                              Usage\n"
+                + commands.ToSummaryString(cmd => $"{cmd.Command.PadRight(35)}{cmd.Usage}")
+                + "\n```", false);
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
@@ -495,6 +500,20 @@ namespace WindowsGSM.DiscordBot
             embed.WithCurrentTimestamp();
 
             return embed;
+        }
+    }
+
+    public class CommandSummary
+    {
+        public string Command { get; set; }
+        public string Usage { get; set; }
+    }
+
+    public static class EnumerableExtensions
+    {
+        public static string ToSummaryString<T>(this IEnumerable<T> items, Func<T, string> formatter, string delimiter = "\n")
+        {
+            return string.Join(delimiter, items.Select(formatter));
         }
     }
 }
