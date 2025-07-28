@@ -416,8 +416,20 @@ namespace WindowsGSM.DiscordBot
             };
 
             string prefix = Configs.GetBotPrefix();
-            embed.AddField("Command", $"{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm stats\n{prefix}wgsm getparam <SERVERID>\n{prefix}wgsm setparam <SERVERID> <PARAMETERS>", inline: true);
-            embed.AddField("Usage", "Check permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nUpdate a server remotely by serverId\nGet the current startup parameters for the specified server\nSet new startup parameters for the specified server", inline: true);
+            embed.AddField("Available Commands:",
+                $"```Command                          Usage\n"
+                + $"{prefix}wgsm check                 Check permission\n"
+                + $"{prefix}wgsm list                  Print server list with id, status and name\n"
+                + $"{prefix}wgsm start <SERVERID>      Start a server remotely by serverId\n"
+                + $"{prefix}wgsm stop <SERVERID>       Stop a server remotely by serverId\n"
+                + $"{prefix}wgsm restart <SERVERID>    Restart a server remotely by serverId\n"
+                + $"{prefix}wgsm update <SERVERID>     Update a server remotely by serverId\n"
+                + $"{prefix}wgsm send <SERVERID> <COMMAND> Send a command to server console\n"
+                + $"{prefix}wgsm backup <SERVERID>     Backup a server remotely by serverId\n"
+                + $"{prefix}wgsm stats                 Get system stats\n"
+                + $"{prefix}wgsm getparam <SERVERID>   Get the current startup parameters for the specified server\n"
+                + $"{prefix}wgsm setparam <SERVERID> <PARAMETERS> Set new startup parameters for the specified server\n"
+                + "```", false);
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
