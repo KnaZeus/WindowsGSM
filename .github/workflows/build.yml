@@ -20,7 +20,7 @@ jobs:
         run: msbuild WindowsGSM.sln /p:Configuration=Release
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: WindowsGSM-Binaries
           path: '**/bin/Release/'
