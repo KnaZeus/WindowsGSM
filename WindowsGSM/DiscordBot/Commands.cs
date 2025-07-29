@@ -407,7 +407,7 @@ namespace WindowsGSM.DiscordBot
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
 
-private async Task SendHelpEmbed(SocketMessage message)
+        private async Task SendHelpEmbed(SocketMessage message)
         {
             var embed = new EmbedBuilder
             {
@@ -416,49 +416,8 @@ private async Task SendHelpEmbed(SocketMessage message)
             };
 
             string prefix = Configs.GetBotPrefix();
-
-            // Re-implementing the general commands field with increased padding
-            // We need to find the longest command string to determine adequate padding.
-            // Example longest command: !wgsm send <SERVERID> <COMMAND> (length including spaces and prefix)
-            // Let's estimate a safe padding for the Command column to prevent wrap-around.
-            // A common monospace character width in Discord is around 7-8 pixels.
-            // A padding of 35-40 seems to cause issues, let's try something larger for the command part.
-            // The command '!wgsm send <SERVERID> <COMMAND>' is roughly 35 characters long.
-            // To ensure the description starts after it, a padding of around 45-50 might be needed.
-            const int CommandPadding = 50; // Increased padding to prevent collision and allow for longer commands
-
-            string generalCommandsContent =
-                $"Command".PadRight(CommandPadding) + "Description\n" +
-                $"-------".PadRight(CommandPadding) + "-----------\n";
-
-            // Add each command and its description, now with larger padding for the command part
-            generalCommandsContent += $"{prefix}wgsm check".PadRight(CommandPadding) + "Check permission\n";
-            generalCommandsContent += $"{prefix}wgsm list".PadRight(CommandPadding) + "Print server list with ID, status, and name\n";
-            generalCommandsContent += $"{prefix}wgsm start <SERVERID>".PadRight(CommandPadding) + "Start a server remotely by serverId\n";
-            generalCommandsContent += $"{prefix}wgsm stop <SERVERID>".PadRight(CommandPadding) + "Stop a server remotely by serverId\n";
-            generalCommandsContent += $"{prefix}wgsm restart <SERVERID>".PadRight(CommandPadding) + "Restart a server remotely by serverId\n";
-            generalCommandsContent += $"{prefix}wgsm update <SERVERID>".PadRight(CommandPadding) + "Update a server remotely by serverId\n";
-            generalCommandsContent += $"{prefix}wgsm send <SERVERID> <COMMAND>".PadRight(CommandPadding) + "Send a command to server console\n";
-            generalCommandsContent += $"{prefix}wgsm backup <SERVERID>".PadRight(CommandPadding) + "Backup a server remotely by serverId\n";
-            generalCommandsContent += $"{prefix}wgsm stats".PadRight(CommandPadding) + "Get system stats\n";
-            generalCommandsContent += $"{prefix}wgsm getparam <SERVERID>".PadRight(CommandPadding) + "Get the current startup parameters for the specified server\n"; // Added new command
-            generalCommandsContent += $"{prefix}wgsm setparam <SERVERID> <PARAMETERS>".PadRight(CommandPadding) + "Set new startup parameters for the specified server\n"; // Added new command
-
-
-            embed.AddField("\u200B",
-                $"```fix\n{generalCommandsContent}```",
-                false); // This field remains non-inline
-
-
-            // The "Custom commands:" section remains separate and non-inline as per your current good implementation
-            embed.AddField("Custom commands:",
-                $"These commands allow you to get and set server startup parameters:\n"
-                + "Use getparam to retrieve current parameters and setparam to change them.\n"
-                + $"You MUST parse the entire startup parameters string yourself if '{prefix}wgsm setparam' is used.\n\n"
-                + $"```fix\n"
-                + $"{prefix}wgsm getparam <SERVERID> - Get current startup parameters\n" // Still in its dedicated code block
-                + $"{prefix}wgsm setparam <SERVERID> <PARAMETERS> - Set new startup parameters\n" // Still in its dedicated code block
-                + "```", false); // Still non-inline
+            embed.AddField("Command", $"{prefix}wgsm getparam <SERVERID>\n{prefix}wgsm setparam <SERVERID> <PARAMETERS>\n{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm stats", inline: true);
+            embed.AddField("Usage", " Get current startup parameters\nSet new startup parameters\nCheck permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nUpdate a server remotely by serverId", inline: true);
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
