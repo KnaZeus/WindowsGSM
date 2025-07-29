@@ -417,18 +417,24 @@ namespace WindowsGSM.DiscordBot
 
 string prefix = Configs.GetBotPrefix();
 
+            string generalCommandsContent =
+                $"Command".PadRight(40) + "Description\n" + 
+                $"-------".PadRight(40) + "-----------\n"; 
+
+            // Add each command and its description
+            generalCommandsContent += $"{prefix}wgsm check".PadRight(40) + "Check permission\n";
+            generalCommandsContent += $"{prefix}wgsm list".PadRight(40) + "Print server list with ID, status, and name\n";
+            generalCommandsContent += $"{prefix}wgsm start <SERVERID>".PadRight(40) + "Start a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm stop <SERVERID>".PadRight(40) + "Stop a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm restart <SERVERID>".PadRight(40) + "Restart a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm update <SERVERID>".PadRight(40) + "Update a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm send <SERVERID> <COMMAND>".PadRight(40) + "Send a command to server console\n";
+            generalCommandsContent += $"{prefix}wgsm backup <SERVERID>".PadRight(40) + "Backup a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm stats".PadRight(40) + "Get system stats\n";
+
             embed.AddField("\u200B", 
-                $"```fix\n" 
-                + $"{prefix}wgsm check - Check permission\n" 
-                + $"{prefix}wgsm list - Print server list with ID, status, and name\n" 
-                + $"{prefix}wgsm start <SERVERID> - Start a server remotely by serverId\n"
-                + $"{prefix}wgsm stop <SERVERID> - Stop a server remotely by serverId\n"
-                + $"{prefix}wgsm restart <SERVERID> - Restart a server remotely by serverId\n"
-                + $"{prefix}wgsm update <SERVERID> - Update a server remotely by serverId\n"
-                + $"{prefix}wgsm send <SERVERID> <COMMAND> - Send a command to server console\n"
-                + $"{prefix}wgsm backup <SERVERID> - Backup a server remotely by serverId\n"
-                + $"{prefix}wgsm stats - Get system stats\n"
-                + "```", false); 
+                $"```fix\n{generalCommandsContent}```", 
+                false); 
 
 
             embed.AddField("Custom commands:",
@@ -436,9 +442,9 @@ string prefix = Configs.GetBotPrefix();
                 + "Use getparam to retrieve current parameters and setparam to change them.\n"
                 + $"You MUST parse the entire startup parameters string yourself if '{prefix}wgsm setparam' is used.\n\n"
                 + $"```fix\n"
-                + $"{prefix}wgsm getparam <SERVERID> - Get the current startup parameters for the specified server\n"
-                + $"{prefix}wgsm setparam <SERVERID> <PARAMETERS> - Set new startup parameters for the specified server\n"
-                + "```", false);
+                + $"{prefix}wgsm getparam <SERVERID> - Get current startup parameters\n" // Simplified
+                + $"{prefix}wgsm setparam <SERVERID> <PARAMETERS> - Set new startup parameters\n" // Simplified
+                + "```", false); // Not inline
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
