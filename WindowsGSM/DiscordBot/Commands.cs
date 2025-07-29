@@ -417,53 +417,48 @@ private async Task SendHelpEmbed(SocketMessage message)
 
             string prefix = Configs.GetBotPrefix();
 
-            // First Field: "Command" (will be inline: true)
-            // Using a code block for the command syntax, similar to your earlier images.
-            embed.AddField("Command",
-                $"```\n" + // Start of the code block
-                $"{prefix}wgsm check\n" +
-                $"{prefix}wgsm list\n" +
-                $"{prefix}wgsm start <SERVERID>\n" +
-                $"{prefix}wgsm stop <SERVERID>\n" +
-                $"{prefix}wgsm restart <SERVERID>\n" +
-                $"{prefix}wgsm update <SERVERID>\n" +
-                $"{prefix}wgsm send <SERVERID> <COMMAND>\n" +
-                $"{prefix}wgsm backup <SERVERID>\n" +
-                $"{prefix}wgsm stats\n" +
-                $"{prefix}wgsm getparam <SERVERID>\n" + // Added new command
-                $"{prefix}wgsm setparam <SERVERID> <PARAMETERS>\n" + // Added new command
-                "```", // End of the code block
-                inline: true); // Set to true for side-by-side
+            // Re-implementing the general commands field with increased padding
+            // We need to find the longest command string to determine adequate padding.
+            // Example longest command: !wgsm send <SERVERID> <COMMAND> (length including spaces and prefix)
+            // Let's estimate a safe padding for the Command column to prevent wrap-around.
+            // A common monospace character width in Discord is around 7-8 pixels.
+            // A padding of 35-40 seems to cause issues, let's try something larger for the command part.
+            // The command '!wgsm send <SERVERID> <COMMAND>' is roughly 35 characters long.
+            // To ensure the description starts after it, a padding of around 45-50 might be needed.
+            const int CommandPadding = 50; // Increased padding to prevent collision and allow for longer commands
 
-            // Second Field: "Usage" (will be inline: true)
-            // The descriptions will now automatically wrap within this field without affecting the "Command" field.
-            embed.AddField("Usage",
-                $"```\n" + // Using a code block here too for consistent styling with Command field
-                "Check permission\n" +
-                "Print server list with ID, status, and name\n" +
-                "Start a server remotely by serverId\n" +
-                "Stop a server remotely by serverId\n" +
-                "Restart a server remotely by serverId\n" +
-                "Update a server remotely by serverId\n" +
-                "Send a command to server console\n" +
-                "Backup a server remotely by serverId\n" +
-                "Get system stats\n" +
-                "Get the current startup parameters for the specified server\n" + // Description for getparam
-                "Set new startup parameters for the specified server\n" + // Description for setparam
-                "```", // End of the code block
-                inline: true); // Set to true for side-by-side
+            string generalCommandsContent =
+                $"Command".PadRight(CommandPadding) + "Description\n" +
+                $"-------".PadRight(CommandPadding) + "-----------\n";
 
-            // Remove the old "Custom commands:" field if you want the two-column structure to be primary
-            // If you want the explanatory text "These commands allow you to get and set..."
-            // in a separate section, you can add it as a third AddField, with inline: false, below these two.
-            // Example if you want to keep the explanatory text in a separate field:
-            /*
-            embed.AddField("Custom commands (details):",
+            // Add each command and its description, now with larger padding for the command part
+            generalCommandsContent += $"{prefix}wgsm check".PadRight(CommandPadding) + "Check permission\n";
+            generalCommandsContent += $"{prefix}wgsm list".PadRight(CommandPadding) + "Print server list with ID, status, and name\n";
+            generalCommandsContent += $"{prefix}wgsm start <SERVERID>".PadRight(CommandPadding) + "Start a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm stop <SERVERID>".PadRight(CommandPadding) + "Stop a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm restart <SERVERID>".PadRight(CommandPadding) + "Restart a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm update <SERVERID>".PadRight(CommandPadding) + "Update a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm send <SERVERID> <COMMAND>".PadRight(CommandPadding) + "Send a command to server console\n";
+            generalCommandsContent += $"{prefix}wgsm backup <SERVERID>".PadRight(CommandPadding) + "Backup a server remotely by serverId\n";
+            generalCommandsContent += $"{prefix}wgsm stats".PadRight(CommandPadding) + "Get system stats\n";
+            generalCommandsContent += $"{prefix}wgsm getparam <SERVERID>".PadRight(CommandPadding) + "Get the current startup parameters for the specified server\n"; // Added new command
+            generalCommandsContent += $"{prefix}wgsm setparam <SERVERID> <PARAMETERS>".PadRight(CommandPadding) + "Set new startup parameters for the specified server\n"; // Added new command
+
+
+            embed.AddField("\u200B",
+                $"```fix\n{generalCommandsContent}```",
+                false); // This field remains non-inline
+
+
+            // The "Custom commands:" section remains separate and non-inline as per your current good implementation
+            embed.AddField("Custom commands:",
                 $"These commands allow you to get and set server startup parameters:\n"
                 + "Use getparam to retrieve current parameters and setparam to change them.\n"
-                + $"You MUST parse the entire startup parameters string yourself if '{prefix}wgsm setparam' is used.",
-                false); // Not inline
-            */
+                + $"You MUST parse the entire startup parameters string yourself if '{prefix}wgsm setparam' is used.\n\n"
+                + $"```fix\n"
+                + $"{prefix}wgsm getparam <SERVERID> - Get current startup parameters\n" // Still in its dedicated code block
+                + $"{prefix}wgsm setparam <SERVERID> <PARAMETERS> - Set new startup parameters\n" // Still in its dedicated code block
+                + "```", false); // Still non-inline
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
