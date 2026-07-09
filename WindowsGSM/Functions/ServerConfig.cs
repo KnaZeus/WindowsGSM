@@ -18,6 +18,7 @@ namespace WindowsGSM.Functions
             public const string ServerMaxPlayer = "servermaxplayer";
             public const string ServerGSLT = "servergslt";
             public const string ServerParam = "serverparam";
+            public const string ConfigFilePath = "configfilepath";
             public const string AutoRestart = "autorestart";
             public const string AutoStart = "autostart";
             public const string AutoUpdate = "autoupdate";
@@ -49,6 +50,7 @@ namespace WindowsGSM.Functions
         public string ServerMaxPlayer;
         public string ServerGSLT;
         public string ServerParam;
+        public string ConfigFilePath;
         public bool AutoRestart;
         public bool AutoStart;
         public bool AutoUpdate;
@@ -120,6 +122,7 @@ namespace WindowsGSM.Functions
                             case SettingName.ServerMaxPlayer: ServerMaxPlayer = keyvalue[1]; break;
                             case SettingName.ServerGSLT: ServerGSLT = keyvalue[1]; break;
                             case SettingName.ServerParam: ServerParam = keyvalue[1]; break;
+                            case SettingName.ConfigFilePath: ConfigFilePath = keyvalue[1]; break;
                             case SettingName.AutoRestart: AutoRestart = keyvalue[1] == "1"; break;
                             case SettingName.AutoStart: AutoStart = keyvalue[1] == "1"; break;
                             case SettingName.AutoUpdate: AutoUpdate = keyvalue[1] == "1"; break;
