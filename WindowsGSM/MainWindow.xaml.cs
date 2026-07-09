@@ -3474,6 +3474,7 @@ namespace WindowsGSM
             numericUpDown_EC_ServerQueryPort.Value = int.TryParse(serverConfig.ServerQueryPort, out var queryPort) ? queryPort : int.Parse(gameServer.QueryPort);
             textbox_EC_ServerMap.Text = serverConfig.ServerMap;
             textbox_EC_ServerGSLT.Text = serverConfig.ServerGSLT;
+            textbox_EC_ConfigFilePath.Text = serverConfig.ConfigFilePath;
             textbox_EC_ServerParam.Text = serverConfig.ServerParam;
             return true;
         }
@@ -3491,6 +3492,7 @@ namespace WindowsGSM
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ServerQueryPort, numericUpDown_EC_ServerQueryPort.Value.ToString());
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ServerMap, textbox_EC_ServerMap.Text.Trim());
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ServerGSLT, textbox_EC_ServerGSLT.Text.Trim());
+            ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ConfigFilePath, textbox_EC_ConfigFilePath.Text.Trim());
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ServerParam, textbox_EC_ServerParam.Text.Trim());
 
             LoadServerTable();

@@ -2,7 +2,9 @@
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
 using WindowsGSM.Functions;
@@ -63,8 +65,8 @@ namespace WindowsGSM.DiscordBot
                 case "check":
                     await message.Channel.SendMessageAsync(
                         serverIds.Contains("0") ?
-                        "You have full permission.\nCommands: `check`, `list`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`, `getparam`, `setparam`" :
-                        $"You have permission on servers (`{string.Join(",", serverIds.ToArray())}`)\nCommands: `check`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`, `getparam`, `setparam`"
+                        "You have full permission.\nCommands: `check`, `list`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`, `getstartparam`, `setstartparam`, `getconfig`, `setconfig`" :
+                        $"You have permission on servers (`{string.Join(",", serverIds.ToArray())}`)\nCommands: `check`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`, `getstartparam`, `setstartparam`, `getconfig`, `setconfig`"
                     );
                     break;
                 case "list":
@@ -119,7 +121,7 @@ namespace WindowsGSM.DiscordBot
                     else
                         await message.Channel.SendMessageAsync("You don't have permission to access.");
                     break;
-                case "getparam":
+                case "getstartparam":
                     if (splits.Length >= 2 && (serverIds.Contains("0") || serverIds.Contains(splits[1])))
                     {
                         string param = ServerConfig.GetSetting(splits[1], ServerConfig.SettingName.ServerParam);
@@ -127,10 +129,10 @@ namespace WindowsGSM.DiscordBot
                     }
                     else
                     {
-                        await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm getparam `<SERVERID>`");
+                        await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm getstartparam `<SERVERID>`");
                     }
                     break;
-                case "setparam":
+                case "setstartparam":
                     if (splits.Length >= 3 && (serverIds.Contains("0") || serverIds.Contains(splits[1])))
                     {
                         string serverId = splits[1];
@@ -142,7 +144,27 @@ namespace WindowsGSM.DiscordBot
                     }
                     else
                     {
-                        await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm setparam `<SERVERID>` `<PARAMETERS>`");
+                        await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm setstartparam `<SERVERID>` `<PARAMETERS>`");
+                    }
+                    break;
+                case "getconfig":
+                    if (splits.Length >= 2 && (serverIds.Contains("0") || serverIds.Contains(splits[1])))
+                    {
+                        await Action_GetConfig(message, splits[1]);
+                    }
+                    else
+                    {
+                        await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm getconfig `<SERVERID>`");
+                    }
+                    break;
+                case "setconfig":
+                    if (splits.Length >= 2 && (serverIds.Contains("0") || serverIds.Contains(splits[1])))
+                    {
+                        await Action_SetConfig(message, splits[1]);
+                    }
+                    else
+                    {
+                        await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm setconfig `<SERVERID>` (attach the replacement config file)");
                     }
                     break;
                 default:
@@ -402,6 +424,111 @@ namespace WindowsGSM.DiscordBot
             }
         }
 
+        private async Task Action_GetConfig(SocketMessage message, string serverId)
+        {
+            await Application.Current.Dispatcher.Invoke(async () =>
+            {
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                if (!WindowsGSM.IsServerExist(serverId))
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) does not exists.");
+                    return;
+                }
+
+                var serverConfig = new ServerConfig(serverId);
+                if (string.IsNullOrWhiteSpace(serverConfig.ConfigFilePath))
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) has no config file path set. Set one in the app's Edit WindowsGSM.cfg panel first.");
+                    return;
+                }
+
+                string fullPath = Path.Combine(ServerPath.GetServersServerFiles(serverId), serverConfig.ConfigFilePath);
+                if (!File.Exists(fullPath))
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) config file not found: `{serverConfig.ConfigFilePath}`.");
+                    return;
+                }
+
+                const long maxUploadBytes = 8 * 1024 * 1024;
+                if (new FileInfo(fullPath).Length > maxUploadBytes)
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) config file is larger than Discord's 8 MB upload limit.");
+                    return;
+                }
+
+                await message.Channel.SendFileAsync(fullPath, $"Server (ID: {serverId}) config file: `{Path.GetFileName(fullPath)}`");
+            });
+        }
+
+        private async Task Action_SetConfig(SocketMessage message, string serverId)
+        {
+            if (message.Attachments.Count == 0)
+            {
+                await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm setconfig `<SERVERID>` (attach the replacement config file to this message)");
+                return;
+            }
+
+            Attachment attachment = message.Attachments.First();
+            bool ready = false;
+            string fullPath = null;
+
+            await Application.Current.Dispatcher.Invoke(async () =>
+            {
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                if (!WindowsGSM.IsServerExist(serverId))
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) does not exists.");
+                    return;
+                }
+
+                MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(serverId);
+                if (serverStatus != MainWindow.ServerStatus.Stopped)
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) must be stopped before uploading a new config file (currently {serverStatus}).");
+                    return;
+                }
+
+                var serverConfig = new ServerConfig(serverId);
+                if (string.IsNullOrWhiteSpace(serverConfig.ConfigFilePath))
+                {
+                    await message.Channel.SendMessageAsync($"Server (ID: {serverId}) has no config file path set. Set one in the app's Edit WindowsGSM.cfg panel first.");
+                    return;
+                }
+
+                fullPath = Path.Combine(ServerPath.GetServersServerFiles(serverId), serverConfig.ConfigFilePath);
+                ready = true;
+            });
+
+            if (!ready)
+            {
+                return;
+            }
+
+            byte[] data;
+            using (var client = new HttpClient())
+            {
+                data = await client.GetByteArrayAsync(attachment.Url);
+            }
+
+            string targetDir = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrEmpty(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            string backupNotice = string.Empty;
+            if (File.Exists(fullPath))
+            {
+                string backupPath = fullPath + ".bak";
+                File.Copy(fullPath, backupPath, true);
+                backupNotice = $" Previous version backed up as `{Path.GetFileName(backupPath)}`.";
+            }
+
+            File.WriteAllBytes(fullPath, data);
+
+            await message.Channel.SendMessageAsync($"Server (ID: {serverId}) config file `{Path.GetFileName(fullPath)}` updated ({data.Length} bytes).{backupNotice}");
+        }
+
         private async Task Action_Stats(SocketMessage message)
         {
             var system = new SystemMetrics();
@@ -431,8 +558,31 @@ namespace WindowsGSM.DiscordBot
             };
 
             string prefix = Configs.GetBotPrefix();
-            embed.AddField("Command", $"{prefix}wgsm getparam <SERVERID>\n{prefix}wgsm setparam <SERVERID> <PARAMETERS>\n{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm stats", inline: true);
-            embed.AddField("Usage", " Get current startup parameters\nSet new startup parameters\nCheck permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nUpdate a server remotely by serverId", inline: true);
+            (string Command, string Usage)[] commands =
+            {
+                ($"{prefix}wgsm getstartparam <SERVERID>", "Get current startup parameters"),
+                ($"{prefix}wgsm setstartparam <SERVERID> <PARAMETERS>", "Set new startup parameters"),
+                ($"{prefix}wgsm getconfig <SERVERID>", "Download the server's config file"),
+                ($"{prefix}wgsm setconfig <SERVERID> (attach file)", "Upload a replacement config file (server must be stopped)"),
+                ($"{prefix}wgsm check", "Check permission"),
+                ($"{prefix}wgsm list", "Print server list with id, status and name"),
+                ($"{prefix}wgsm start <SERVERID>", "Start a server remotely by serverId"),
+                ($"{prefix}wgsm stop <SERVERID>", "Stop a server remotely by serverId"),
+                ($"{prefix}wgsm restart <SERVERID>", "Restart a server remotely by serverId"),
+                ($"{prefix}wgsm update <SERVERID>", "Update a server remotely by serverId"),
+                ($"{prefix}wgsm send <SERVERID> <COMMAND>", "Send a command to server console"),
+                ($"{prefix}wgsm backup <SERVERID>", "Backup a server remotely by serverId"),
+                ($"{prefix}wgsm stats", "Show CPU, RAM, disk and server stats"),
+            };
+
+            // Pair each command with its own usage in a single field rather than two
+            // separately-wrapping "columns" - Discord wraps long command lines onto a second
+            // line inside their narrow field, which desyncs a same-length parallel Usage field
+            // and shifts every following description out of alignment.
+            foreach ((string command, string usage) in commands)
+            {
+                embed.AddField($"`{command}`", usage);
+            }
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
